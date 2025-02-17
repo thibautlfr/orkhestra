@@ -10,8 +10,12 @@ from typing import List
 
 
 @strawberry.field
-def get_projects() -> List[ProjectType]:
+def get_projects(info: strawberry.Info) -> List[ProjectType]:
     db = next(get_db())
+
+    if not info.context.user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     projects = db.query(ProjectModel).all()
     return [
         ProjectType(

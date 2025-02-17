@@ -136,15 +136,15 @@ def signup(username: str, password: str, email: str, role: str) -> UserType:
 
 
 @strawberry.mutation
-def login(username: str, password: str) -> Optional[str]:
+def login(email: str, password: str) -> Optional[str]:
     db = next(get_db())
 
-    user = db.query(UserModel).filter(UserModel.username == username).first()
+    user = db.query(UserModel).filter(UserModel.email == email).first()
     if not user or not verify_password(password, user.password):
         raise Exception("Invalid username or password")
 
     token = create_access_token(
-        {"user_id": user.id, "username": user.username, "role": user.role}
+        {"user_id": user.id, "email": user.email, "username": user.username}
     )
 
     return token
