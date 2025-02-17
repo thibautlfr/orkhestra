@@ -100,7 +100,7 @@ def update_project(id: int, title: str, description: str, owner_id: int) -> Proj
     )
 
 
-@strawberry.mutation(directives=[hasRole])
+@strawberry.mutation
 def delete_project(info: strawberry.Info, id: int) -> bool:
     if not hasRole(info, "ADMIN"):
         raise HTTPException(status_code=403, detail="Permission denied")

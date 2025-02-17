@@ -16,3 +16,19 @@ export const GET_PROJECTS = gql`
     }
   }
 `;
+
+export const GET_PROJECT = gql`
+  query MyQuery($id: Int!) {
+    getProject(id: $id) {
+      id
+      title
+      ownerId
+      description
+      tasks {
+        id
+        status
+        title
+      }
+    }
+  }
+`;

@@ -1,13 +1,15 @@
-import uvicorn
 import strawberry
+import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
 from api.graphql.schemas.query import Query
 from api.graphql.schemas.mutation import Mutation
+from api.graphql.schemas.subscription import Subscription
 from api.graphql.middlewares.auth import custom_context_dependency
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -16,7 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
+schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=Subscription)
+
 graphql_app = GraphQLRouter(schema, context_getter=custom_context_dependency)
 app.include_router(graphql_app, prefix="/graphql")
 
