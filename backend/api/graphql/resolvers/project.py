@@ -3,8 +3,9 @@ from database.db import get_db, Session
 from api.graphql.types.project import ProjectType
 from api.graphql.types.task import TaskType
 from database.models import ProjectModel
-from api.graphql.types.user import UserType
 from fastapi import HTTPException
+from api.graphql.directives.auth import hasRole
+from graphql import DirectiveLocation
 
 
 from typing import List
@@ -99,8 +100,11 @@ def update_project(id: int, title: str, description: str, owner_id: int) -> Proj
     )
 
 
-@strawberry.mutation
+@strawberry.mutation(directives=[hasRole])
 def delete_project(info: strawberry.Info, id: int) -> bool:
+    if not hasRole(info, "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     db = info.context.db
 
     if not info.context.user:

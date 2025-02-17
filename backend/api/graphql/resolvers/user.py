@@ -144,7 +144,12 @@ def login(email: str, password: str) -> Optional[str]:
         raise Exception("Invalid username or password")
 
     token = create_access_token(
-        {"user_id": user.id, "email": user.email, "username": user.username}
+        {
+            "user_id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "role": user.role,
+        }
     )
 
     return token
