@@ -6,17 +6,19 @@ from database.models import ProjectModel
 from api.graphql.types.user import UserType
 from fastapi import HTTPException
 
+
 from typing import List
 
 
 @strawberry.field
 def get_projects(info: strawberry.Info) -> List[ProjectType]:
-    db = next(get_db())
-
-    if not info.context.user:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    db = info.context.db
 
     projects = db.query(ProjectModel).all()
+
+    project_ids = [project.id for project in projects]
+    tasks_by_project = info.context.task_loader.load_tasks(project_ids)
+
     return [
         ProjectType(
             id=project.id,
@@ -30,10 +32,10 @@ def get_projects(info: strawberry.Info) -> List[ProjectType]:
                     status=task.status,
                     project_id=task.project_id,
                 )
-                for task in project.tasks
+                for task in tasks_by_project[i]
             ],
         )
-        for project in projects
+        for i, project in enumerate(projects)
     ]
 
 
@@ -97,18 +99,9 @@ def update_project(id: int, title: str, description: str, owner_id: int) -> Proj
     )
 
 
-# @strawberry.mutation
-# def delete_project(id: int) -> bool:
-#     db = next(get_db())
-#     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
-#     db.delete(project)
-#     db.commit()
-#     return True
-
-
 @strawberry.mutation
 def delete_project(info: strawberry.Info, id: int) -> bool:
-    db = next(get_db())
+    db = info.context.db
 
     if not info.context.user:
         raise HTTPException(status_code=401, detail="Authentication required")

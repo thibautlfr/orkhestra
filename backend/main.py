@@ -7,10 +7,7 @@ from api.graphql.schemas.mutation import Mutation
 from api.graphql.middlewares.auth import custom_context_dependency
 from fastapi.middleware.cors import CORSMiddleware
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
-
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -19,6 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+schema = strawberry.Schema(query=Query, mutation=Mutation)
 graphql_app = GraphQLRouter(schema, context_getter=custom_context_dependency)
 app.include_router(graphql_app, prefix="/graphql")
 

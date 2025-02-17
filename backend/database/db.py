@@ -1,8 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import logging
 
-engine = create_engine('sqlite:///database.db')
+logging.basicConfig()
+logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+
+engine = create_engine("sqlite:///database.db")
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
