@@ -6,7 +6,7 @@ from api.graphql.types.task import TaskType
 @strawberry.type
 class ProjectType:
     id: int
-    name: str
+    title: str
     description: str
     owner_id: int
     tasks: List[TaskType]

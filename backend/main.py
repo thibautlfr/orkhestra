@@ -4,11 +4,13 @@ from fastapi import FastAPI
 from strawberry.fastapi import GraphQLRouter
 from api.graphql.schemas.query import Query
 from api.graphql.schemas.mutation import Mutation
+from api.graphql.middlewares.auth import custom_context_dependency
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 
 app = FastAPI()
-graphql_app = GraphQLRouter(schema)
+
+graphql_app = GraphQLRouter(schema, context_getter=custom_context_dependency)
 app.include_router(graphql_app, prefix="/graphql")
 
 if __name__ == "__main__":

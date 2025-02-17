@@ -1,7 +1,7 @@
 import strawberry
 from api.graphql.resolvers.project import get_projects, get_project
 from api.graphql.resolvers.user import get_users, get_user
-from api.graphql.resolvers.tasks import get_tasks, get_task
+from api.graphql.resolvers.task import get_tasks, get_task
 
 
 @strawberry.type

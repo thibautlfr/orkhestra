@@ -4,6 +4,7 @@ from api.graphql.types.project import ProjectType
 from api.graphql.types.task import TaskType
 from database.models import ProjectModel
 from api.graphql.types.user import UserType
+from fastapi import HTTPException
 
 from typing import List
 
@@ -15,7 +16,7 @@ def get_projects() -> List[ProjectType]:
     return [
         ProjectType(
             id=project.id,
-            name=project.name,
+            title=project.title,
             description=project.description,
             owner_id=project.owner_id,
             tasks=[
@@ -23,10 +24,12 @@ def get_projects() -> List[ProjectType]:
                     id=task.id,
                     title=task.title,
                     status=task.status,
-                    project_id=task.project_id
-                ) for task in project.tasks
-            ]
-        ) for project in projects
+                    project_id=task.project_id,
+                )
+                for task in project.tasks
+            ],
+        )
+        for project in projects
     ]
 
 
@@ -36,7 +39,7 @@ def get_project(id: int) -> ProjectType:
     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
     return ProjectType(
         id=project.id,
-        name=project.name,
+        title=project.title,
         description=project.description,
         owner_id=project.owner_id,
         tasks=[
@@ -44,54 +47,78 @@ def get_project(id: int) -> ProjectType:
                 id=task.id,
                 title=task.title,
                 status=task.status,
-                project_id=task.project_id
-            ) for task in project.tasks
-        ]
+                project_id=task.project_id,
+            )
+            for task in project.tasks
+        ],
     )
 
 
 @strawberry.mutation
-def create_project(name: str, description: str, owner_id: int) -> ProjectType:
+def create_project(title: str, description: str, owner_id: int) -> ProjectType:
     db = next(get_db())
-    project = ProjectModel(
-        name=name, description=description, owner_id=owner_id)
+    project = ProjectModel(title=title, description=description, owner_id=owner_id)
     db.add(project)
     db.commit()
     return ProjectType(
         id=project.id,
-        name=project.name,
+        title=project.title,
         description=project.description,
-        tasks=[]
+        owner_id=project.owner_id,
+        tasks=[],
     )
 
 
 @strawberry.mutation
-def update_project(id: int, name: str, description: str, owner_id: int) -> ProjectType:
+def update_project(id: int, title: str, description: str, owner_id: int) -> ProjectType:
     db = next(get_db())
     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
-    project.name = name
+    project.title = title
     project.description = description
     project.owner_id = owner_id
     db.commit()
     return ProjectType(
         id=project.id,
-        name=project.name,
+        title=project.title,
         description=project.description,
         tasks=[
             TaskType(
                 id=task.id,
                 title=task.title,
                 status=task.status,
-                project_id=task.project_id
-            ) for task in project.tasks
-        ]
+                project_id=task.project_id,
+            )
+            for task in project.tasks
+        ],
     )
 
 
+# @strawberry.mutation
+# def delete_project(id: int) -> bool:
+#     db = next(get_db())
+#     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
+#     db.delete(project)
+#     db.commit()
+#     return True
+
+
 @strawberry.mutation
-def delete_project(id: int) -> bool:
+def delete_project(info: strawberry.Info, id: int) -> bool:
     db = next(get_db())
+
+    if not info.context.user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = info.context.user["user_id"]
+
     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    user_id = info.context.user["user_id"]
+    if project.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     db.delete(project)
     db.commit()
     return True
