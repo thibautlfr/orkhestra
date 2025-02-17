@@ -5,35 +5,32 @@ from sqlalchemy import ForeignKey
 
 
 class UserModel(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     username = Column(String(30), nullable=False)
-    password = Column(String(30), nullable=False)
-    email = Column(String(30), nullable=False)
+    password = Column(String(255), nullable=False)
+    email = Column(String(50), nullable=False)
     role = Column(String(30), nullable=False)
-    projects = relationship('ProjectModel', back_populates='owner')
+    projects = relationship("ProjectModel", back_populates="owner")
 
 
 class ProjectModel(Base):
-    __tablename__ = 'projects'
+    __tablename__ = "projects"
 
     id: int = Column(Integer, primary_key=True, index=True)
     name: str = Column(String(30), nullable=False)
     description: str = Column(String(100), nullable=False)
-    owner_id: int = Column(Integer, ForeignKey('users.id'), nullable=False)
-    owner = relationship('UserModel', cascade='all, delete',
-                         back_populates="projects")
-    tasks = relationship('TaskModel', cascade='all, delete',
-                         back_populates='project')
+    owner_id: int = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner = relationship("UserModel", cascade="all, delete", back_populates="projects")
+    tasks = relationship("TaskModel", cascade="all, delete", back_populates="project")
 
 
 class TaskModel(Base):
-    __tablename__ = 'tasks'
+    __tablename__ = "tasks"
 
     id: int = Column(Integer, primary_key=True)
     title: str = Column(String(30), nullable=False)
     status: str = Column(String(30), nullable=False)
-    project_id: int = Column(
-        Integer, ForeignKey('projects.id'), nullable=False)
-    project = relationship('ProjectModel', back_populates='tasks')
+    project_id: int = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    project = relationship("ProjectModel", back_populates="tasks")

@@ -4,6 +4,7 @@ from api.graphql.types.user import UserType
 from api.graphql.types.project import ProjectType
 from database.models import UserModel, ProjectModel
 from database.db import get_db
+from api.auth import hash_password, verify_password, create_access_token
 
 
 @strawberry.field
@@ -22,10 +23,12 @@ def get_users() -> List[UserType]:
                     id=project.id,
                     name=project.name,
                     description=project.description,
-                    owner_id=project.owner_id
-                ) for project in user.projects
-            ]
-        ) for user in users
+                    owner_id=project.owner_id,
+                )
+                for project in user.projects
+            ],
+        )
+        for user in users
     ]
 
 
@@ -44,17 +47,17 @@ def get_user(id: int) -> UserType:
                 id=project.id,
                 name=project.name,
                 description=project.description,
-                owner_id=project.owner_id
-            ) for project in user.projects
-        ]
+                owner_id=project.owner_id,
+            )
+            for project in user.projects
+        ],
     )
 
 
 @strawberry.mutation
 def create_user(username: str, password: str, role: str, email: str) -> UserType:
     db = next(get_db())
-    user = UserModel(
-        username=username, password=password, role=role, email=email)
+    user = UserModel(username=username, password=password, role=role, email=email)
     db.add(user)
     db.commit()
     return UserType(
@@ -63,12 +66,14 @@ def create_user(username: str, password: str, role: str, email: str) -> UserType
         password=user.password,
         role=user.role,
         email=user.email,
-        projects=[]
+        projects=[],
     )
 
 
 @strawberry.mutation
-def update_user(id: int, username: str, password: str, role: str, email: str) -> UserType:
+def update_user(
+    id: int, username: str, password: str, role: str, email: str
+) -> UserType:
     db = next(get_db())
     user = db.query(UserModel).filter(UserModel.id == id).first()
     user.username = username
@@ -87,9 +92,10 @@ def update_user(id: int, username: str, password: str, role: str, email: str) ->
                 id=project.id,
                 name=project.name,
                 description=project.description,
-                owner_id=project.owner_id
-            ) for project in user.projects
-        ]
+                owner_id=project.owner_id,
+            )
+            for project in user.projects
+        ],
     )
 
 
@@ -100,3 +106,43 @@ def delete_user(id: int) -> bool:
     db.delete(user)
     db.commit()
     return True
+
+
+@strawberry.mutation
+def signup(username: str, email: str, password: str, role: str) -> str:
+    db = next(get_db())
+
+    existing_user = (
+        db.query(UserModel)
+        .filter((UserModel.username == username) | (UserModel.email == email))
+        .first()
+    )
+    if existing_user:
+        raise Exception("Username or email already exists")
+
+    hashed_pwd = hash_password(password)
+
+    new_user = UserModel(username=username, email=email, password=hashed_pwd, role=role)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    token = create_access_token({"sub": new_user.id, "role": new_user.role})
+
+    return token
+
+
+@strawberry.mutation
+def login(username: str, password: str) -> str:
+    db = next(get_db())
+
+    user = db.query(UserModel).filter(UserModel.username == username).first()
+    if not user:
+        raise Exception("User not found")
+
+    if not verify_password(password, user.password):
+        raise Exception("Invalid password")
+
+    token = create_access_token({"sub": user.id, "role": user.role})
+
+    return token
