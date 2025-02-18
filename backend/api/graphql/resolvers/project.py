@@ -13,11 +13,16 @@ from typing import List
 def get_projects(
     info: strawberry.Info, offset: int = 0, limit: int = 10
 ) -> List[ProjectType]:
-    hasRole(info, "ADMIN")
+    if not info.context.user:
+        raise HTTPException(status_code=401, detail="Authentication required")
 
     db = info.context.db
 
-    query = db.query(ProjectModel).offset(offset)
+    user_id = info.context.user["user_id"]
+
+    query = (
+        db.query(ProjectModel).filter(ProjectModel.owner_id == user_id).offset(offset)
+    )
     if limit != -1:
         query = query.limit(limit)
     projects = query.all()
@@ -47,11 +52,19 @@ def get_projects(
 
 @strawberry.field
 def get_project(info: strawberry.Info, id: int) -> ProjectType:
-    hasRole(info, "ADMIN")
+    if not info.context.user:
+        raise HTTPException(status_code=401, detail="Authentication required")
 
     db = info.context.db
 
     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    user_id = info.context.user["user_id"]
+    if project.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     tasks = info.context.task_loader.load(project.id)
 
     return ProjectType(
@@ -73,13 +86,20 @@ def get_project(info: strawberry.Info, id: int) -> ProjectType:
 
 @strawberry.field
 def search_projects(info: strawberry.Info, keyword: str) -> List[ProjectType]:
-    db = next(get_db())
+    if not info.context.user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    db = info.context.db
+    user_id = info.context.user["user_id"]
 
     projects = (
         db.query(ProjectModel)
         .filter(
-            (ProjectModel.title.ilike(f"%{keyword}%"))
-            | (ProjectModel.description.ilike(f"%{keyword}%"))
+            (ProjectModel.owner_id == user_id)
+            & (
+                (ProjectModel.title.ilike(f"%{keyword}%"))
+                | (ProjectModel.description.ilike(f"%{keyword}%"))
+            )
         )
         .all()
     )

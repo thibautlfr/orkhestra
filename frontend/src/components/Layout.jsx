@@ -1,3 +1,4 @@
+import { useApolloClient } from "@apollo/client";
 import { Briefcase, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -5,8 +6,11 @@ export const Layout = ({ children }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
+  const client = useApolloClient();
+
   const handleLogout = () => {
     localStorage.removeItem("token");
+    client.clearStore();
     navigate("/login");
   };
 
