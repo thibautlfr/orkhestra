@@ -26,6 +26,12 @@ export const CREATE_PROJECT = gql`
   }
 `;
 
+export const DELETE_PROJECT = gql`
+  mutation DeleteProject($id: Int!) {
+    deleteProject(id: $id)
+  }
+`;
+
 export const CREATE_TASK = gql`
   mutation CreateTask($title: String!, $status: String!, $projectId: Int!) {
     createTask(title: $title, status: $status, projectId: $projectId) {

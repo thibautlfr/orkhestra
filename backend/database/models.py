@@ -11,7 +11,9 @@ class UserModel(Base):
     email = Column(String(50), nullable=False)
     password = Column(String(30), nullable=False)
     role = Column(String(30), nullable=False)
-    projects = relationship("ProjectModel", back_populates="owner")
+    projects = relationship(
+        "ProjectModel", cascade="all, delete-orphan", back_populates="owner"
+    )
 
 
 class ProjectModel(Base):
@@ -22,7 +24,9 @@ class ProjectModel(Base):
     description: str = Column(String(100), nullable=False)
     owner_id: int = Column(Integer, ForeignKey("users.id"), nullable=False)
     owner = relationship("UserModel", cascade="all, delete", back_populates="projects")
-    tasks = relationship("TaskModel", cascade="all, delete", back_populates="project")
+    tasks = relationship(
+        "TaskModel", cascade="all, delete-orphan", back_populates="project"
+    )
 
 
 class TaskModel(Base):

@@ -1,5 +1,4 @@
 import strawberry
-from database.db import get_db, Session
 from api.graphql.types.project import ProjectType
 from api.graphql.types.task import TaskType
 from database.models import ProjectModel
@@ -137,46 +136,17 @@ def create_project(info: strawberry.Info, title: str, description: str) -> Proje
 
 
 @strawberry.mutation
-def update_project(id: int, title: str, description: str, owner_id: int) -> ProjectType:
-    db = next(get_db())
-    project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
-    project.title = title
-    project.description = description
-    project.owner_id = owner_id
-    db.commit()
-    return ProjectType(
-        id=project.id,
-        title=project.title,
-        description=project.description,
-        tasks=[
-            TaskType(
-                id=task.id,
-                title=task.title,
-                status=task.status,
-                project_id=task.project_id,
-            )
-            for task in project.tasks
-        ],
-    )
-
-
-@strawberry.mutation
 def delete_project(info: strawberry.Info, id: int) -> bool:
-    if not hasRole(info, "ADMIN"):
-        raise HTTPException(status_code=403, detail="Permission denied")
-
-    db = info.context.db
-
     if not info.context.user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
+    db = info.context.db
     user_id = info.context.user["user_id"]
 
     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    user_id = info.context.user["user_id"]
     if project.owner_id != user_id:
         raise HTTPException(status_code=403, detail="Permission denied")
 

@@ -1,9 +1,16 @@
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
-import { ChevronLeft, ChevronRight, PlusCircle, Search, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  PlusCircle,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react"; // Ajoutez Trash2
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProjectCard } from "../components/ProjectCard";
-import { CREATE_PROJECT } from "../graphql/mutations";
+import { CREATE_PROJECT, DELETE_PROJECT } from "../graphql/mutations"; // Importez DELETE_PROJECT
 import { GET_PROJECTS, SEARCH_PROJECTS } from "../graphql/queries";
 
 export const ProjectsPage = () => {
@@ -41,6 +48,10 @@ export const ProjectsPage = () => {
     refetchQueries: [{ query: GET_PROJECTS, variables: { offset, limit } }],
   });
 
+  const [deleteProject] = useMutation(DELETE_PROJECT, {
+    refetchQueries: [{ query: GET_PROJECTS, variables: { offset, limit } }],
+  });
+
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>Erreur : {error.message}</p>;
 
@@ -60,6 +71,14 @@ export const ProjectsPage = () => {
       }
     } catch (err) {
       alert(`Erreur lors de la création du projet : ${err.message}`);
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    try {
+      await deleteProject({ variables: { id: projectId } });
+    } catch (err) {
+      alert(`Erreur lors de la suppression du projet : ${err.message}`);
     }
   };
 
@@ -92,13 +111,20 @@ export const ProjectsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.length > 0 ? (
           projects.map((project) => (
-            <Link
-              key={project.id}
-              to={`/projects/${project.id}`}
-              className="block hover:no-underline"
-            >
-              <ProjectCard project={project} />
-            </Link>
+            <div key={project.id} className="relative">
+              <Link
+                to={`/projects/${project.id}`}
+                className="block hover:no-underline"
+              >
+                <ProjectCard project={project} />
+              </Link>
+              <button
+                onClick={() => handleDeleteProject(project.id)}
+                className="absolute top-2 right-2 bg-red-600 text-white m-2 p-2 rounded-lg hover:bg-red-700 transition"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </div>
           ))
         ) : (
           <p className="text-center text-gray-500">Aucun projet trouvé.</p>
