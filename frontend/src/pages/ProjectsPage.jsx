@@ -1,20 +1,41 @@
-import { useQuery } from "@apollo/client";
+import { useLazyQuery, useQuery } from "@apollo/client";
 import { PlusCircle, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ProjectCard } from "../components/ProjectCard";
-import { GET_PROJECTS } from "../graphql/queries";
+import { GET_PROJECTS, SEARCH_PROJECTS } from "../graphql/queries";
 
 export const ProjectsPage = () => {
-  const handleNewProject = () => {
-    alert("TODO: Implémenter la mutation de création de projet");
-  };
+  const [offset] = useState(0);
+  const [keyword, setKeyword] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+  const limit = 6;
 
-  const { loading, error, data } = useQuery(GET_PROJECTS);
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p>Erreur : {error.message}</p>;
+  const { data, fetchMore } = useQuery(GET_PROJECTS, {
+    variables: { offset: 0, limit: 6 },
+  });
 
-  const projects = data.getProjects;
-  console.log(projects);
+  const [searchProjects, { data: searchData }] = useLazyQuery(SEARCH_PROJECTS);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [keyword]);
+
+  useEffect(() => {
+    if (debouncedKeyword.trim() !== "") {
+      searchProjects({ variables: { keyword: debouncedKeyword } });
+    }
+  }, [debouncedKeyword, searchProjects]);
+
+  const projects = debouncedKeyword
+    ? searchData?.searchProjects || []
+    : data?.getProjects || [];
 
   return (
     <div>
@@ -22,19 +43,23 @@ export const ProjectsPage = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Mes Projets</h2>
           <button
-            onClick={handleNewProject}
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+            onClick={() =>
+              alert("TODO: Implémenter la mutation de création de projet")
+            }
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
             <PlusCircle className="h-5 w-5 mr-2" />
             Nouveau Projet
           </button>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <div className="relative flex items-center">
+          <Search className="absolute left-3 h-5 w-5 text-gray-400" />
           <input
             type="text"
             placeholder="Rechercher un projet..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
           />
         </div>
       </div>
@@ -50,6 +75,19 @@ export const ProjectsPage = () => {
           </Link>
         ))}
       </div>
+
+      {!debouncedKeyword && (
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() =>
+              fetchMore({ variables: { offset: offset + limit, limit } })
+            }
+            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-900"
+          >
+            Charger plus
+          </button>
+        </div>
+      )}
     </div>
   );
 };

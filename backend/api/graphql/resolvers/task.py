@@ -26,11 +26,25 @@ def get_task(id: int) -> TaskType:
     )
 
 
+@strawberry.field
+def tasks_by_status(info: strawberry.Info, status: str) -> List[TaskType]:
+    db = next(get_db())
+
+    tasks = db.query(TaskModel).filter(TaskModel.status == status).all()
+
+    return [
+        TaskType(
+            id=task.id, title=task.title, status=task.status, project_id=task.project_id
+        )
+        for task in tasks
+    ]
+
+
 @strawberry.mutation
 def create_task(
     info: strawberry.Info, title: str, status: str, project_id: int
 ) -> TaskType:
-    db = next(get_db())
+    db = info.context.db
 
     task = TaskModel(title=title, status=status, project_id=project_id)
     db.add(task)
