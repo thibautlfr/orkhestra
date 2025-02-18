@@ -1,10 +1,10 @@
-import { useMutation, useQuery } from "@apollo/client";
-import { PlusCircle, X } from "lucide-react";
-import { useState } from "react";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
+import { ChevronLeft, ChevronRight, PlusCircle, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProjectCard } from "../components/ProjectCard";
 import { CREATE_PROJECT } from "../graphql/mutations";
-import { GET_PROJECTS } from "../graphql/queries";
+import { GET_PROJECTS, SEARCH_PROJECTS } from "../graphql/queries";
 
 export const ProjectsPage = () => {
   document.title = "Mes Projets";
@@ -13,15 +13,36 @@ export const ProjectsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [newProject, setNewProject] = useState({ title: "", description: "" });
 
-  const [createProject] = useMutation(CREATE_PROJECT, {
-    refetchQueries: [{ query: GET_PROJECTS }],
+  const [searchTerm, setSearchTerm] = useState("");
+  const [offset, setOffset] = useState(0);
+  const limit = 3;
+
+  const { loading, error, data } = useQuery(GET_PROJECTS, {
+    variables: { offset, limit },
   });
 
-  const { loading, error, data } = useQuery(GET_PROJECTS);
+  const [searchProjects, { data: searchData }] = useLazyQuery(SEARCH_PROJECTS);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchTerm) {
+        searchProjects({ variables: { keyword: searchTerm } });
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, searchProjects]);
+
+  const projects = searchTerm
+    ? searchData?.searchProjects || []
+    : data?.getProjects || [];
+
+  const [createProject] = useMutation(CREATE_PROJECT, {
+    refetchQueries: [{ query: GET_PROJECTS, variables: { offset, limit } }],
+  });
+
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>Erreur : {error.message}</p>;
-
-  const projects = data.getProjects;
 
   const handleNewProject = async () => {
     if (!newProject.title || !newProject.description) {
@@ -55,7 +76,63 @@ export const ProjectsPage = () => {
             Nouveau Projet
           </button>
         </div>
+
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Rechercher un projet..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+        </div>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projects.length > 0 ? (
+          projects.map((project) => (
+            <Link
+              key={project.id}
+              to={`/projects/${project.id}`}
+              className="block hover:no-underline"
+            >
+              <ProjectCard project={project} />
+            </Link>
+          ))
+        ) : (
+          <p className="text-center text-gray-500">Aucun projet trouvé.</p>
+        )}
+      </div>
+
+      {!searchTerm && (
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={() => setOffset((prev) => Math.max(prev - limit, 0))}
+            disabled={offset === 0}
+            className={`flex items-center px-4 py-2 border rounded-lg ${
+              offset === 0
+                ? "text-gray-400 cursor-not-allowed"
+                : "hover:bg-gray-100"
+            }`}
+          >
+            <ChevronLeft className="h-5 w-5" />
+            Précédent
+          </button>
+          <button
+            onClick={() => setOffset((prev) => prev + limit)}
+            disabled={projects.length < limit}
+            className={`flex items-center px-4 py-2 border rounded-lg ${
+              projects.length < limit
+                ? "text-gray-400 cursor-not-allowed"
+                : "hover:bg-gray-100"
+            }`}
+          >
+            Suivant
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -92,18 +169,6 @@ export const ProjectsPage = () => {
           </div>
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((project) => (
-          <Link
-            key={project.id}
-            to={`/projects/${project.id}`}
-            className="block hover:no-underline"
-          >
-            <ProjectCard project={project} />
-          </Link>
-        ))}
-      </div>
     </div>
   );
 };

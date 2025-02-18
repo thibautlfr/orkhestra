@@ -10,10 +10,17 @@ from typing import List
 
 
 @strawberry.field
-def get_projects(info: strawberry.Info) -> List[ProjectType]:
+def get_projects(
+    info: strawberry.Info, offset: int = 0, limit: int = 10
+) -> List[ProjectType]:
+    hasRole(info, "ADMIN")
+
     db = info.context.db
 
-    projects = db.query(ProjectModel).all()
+    query = db.query(ProjectModel).offset(offset)
+    if limit != -1:
+        query = query.limit(limit)
+    projects = query.all()
 
     project_ids = [project.id for project in projects]
     tasks_by_project = info.context.task_loader.load_tasks(project_ids)
@@ -39,9 +46,14 @@ def get_projects(info: strawberry.Info) -> List[ProjectType]:
 
 
 @strawberry.field
-def get_project(id: int) -> ProjectType:
-    db = next(get_db())
+def get_project(info: strawberry.Info, id: int) -> ProjectType:
+    hasRole(info, "ADMIN")
+
+    db = info.context.db
+
     project = db.query(ProjectModel).filter(ProjectModel.id == id).first()
+    tasks = info.context.task_loader.load(project.id)
+
     return ProjectType(
         id=project.id,
         title=project.title,
@@ -54,9 +66,34 @@ def get_project(id: int) -> ProjectType:
                 status=task.status,
                 project_id=task.project_id,
             )
-            for task in project.tasks
+            for task in tasks
         ],
     )
+
+
+@strawberry.field
+def search_projects(info: strawberry.Info, keyword: str) -> List[ProjectType]:
+    db = next(get_db())
+
+    projects = (
+        db.query(ProjectModel)
+        .filter(
+            (ProjectModel.title.ilike(f"%{keyword}%"))
+            | (ProjectModel.description.ilike(f"%{keyword}%"))
+        )
+        .all()
+    )
+
+    return [
+        ProjectType(
+            id=project.id,
+            title=project.title,
+            description=project.description,
+            owner_id=project.owner_id,
+            tasks=[],
+        )
+        for project in projects
+    ]
 
 
 @strawberry.mutation

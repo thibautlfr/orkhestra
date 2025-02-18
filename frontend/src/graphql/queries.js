@@ -1,18 +1,11 @@
 import { gql } from "@apollo/client";
 
 export const GET_PROJECTS = gql`
-  query MyQuery {
-    getProjects {
-      description
+  query GetProjects($offset: Int!, $limit: Int!) {
+    getProjects(offset: $offset, limit: $limit) {
       id
-      ownerId
-      tasks {
-        id
-        projectId
-        status
-        title
-      }
       title
+      description
     }
   }
 `;
@@ -29,6 +22,16 @@ export const GET_PROJECT = gql`
         status
         title
       }
+    }
+  }
+`;
+
+export const SEARCH_PROJECTS = gql`
+  query SearchProjects($keyword: String!) {
+    searchProjects(keyword: $keyword) {
+      id
+      title
+      description
     }
   }
 `;
