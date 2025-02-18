@@ -4,12 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 
 export const Layout = ({ children }) => {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token-projecthub");
 
   const client = useApolloClient();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("token-projecthub");
     client.clearStore();
     navigate("/login");
   };

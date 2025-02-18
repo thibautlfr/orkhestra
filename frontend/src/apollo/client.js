@@ -14,7 +14,7 @@ const httpLink = createHttpLink({
 });
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token-projecthub");
   return {
     headers: {
       ...headers,
@@ -27,7 +27,7 @@ const wsLink = new GraphQLWsLink(
   createClient({
     url: "ws://127.0.0.1:8000/graphql",
     connectionParams: {
-      token: localStorage.getItem("token"),
+      token: localStorage.getItem("token-projecthub"),
     },
   })
 );

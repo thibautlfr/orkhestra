@@ -24,7 +24,7 @@ export const LoginPage = () => {
       const { data } = await login({ variables: formData });
 
       if (data?.login) {
-        localStorage.setItem("token", data.login);
+        localStorage.setItem("token-projecthub", data.login);
         navigate("/");
       }
     } catch (err) {
