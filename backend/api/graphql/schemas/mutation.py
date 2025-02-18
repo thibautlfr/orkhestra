@@ -5,7 +5,7 @@ from api.graphql.resolvers.user import (
     signup,
     login,
 )
-from api.graphql.resolvers.task import create_task
+from api.graphql.resolvers.task import create_task, delete_task
 
 
 @strawberry.type
@@ -20,3 +20,4 @@ class Mutation:
     deleteProject = delete_project
 
     createTask = create_task
+    delete_task = delete_task

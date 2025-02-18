@@ -36,3 +36,9 @@ export const CREATE_TASK = gql`
     }
   }
 `;
+
+export const DELETE_TASK = gql`
+  mutation DeleteTask($id: Int!) {
+    deleteTask(taskId: $id)
+  }
+`;

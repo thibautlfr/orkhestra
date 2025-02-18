@@ -24,3 +24,16 @@ def create_task(
     return TaskType(
         id=task.id, title=task.title, status=task.status, project_id=task.project_id
     )
+
+
+@strawberry.mutation
+def delete_task(info: strawberry.Info, task_id: int) -> bool:
+    hasRole(info, "ADMIN")
+
+    db = info.context.db
+
+    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+    db.delete(task)
+    db.commit()
+
+    return True

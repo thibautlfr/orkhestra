@@ -9,7 +9,7 @@ import { ON_TASK_CREATED } from "../graphql/subscriptions";
 
 export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
-  const { data, loading, error } = useQuery(GET_PROJECT, {
+  const { data, loading, error, refetch } = useQuery(GET_PROJECT, {
     variables: { id: parseInt(projectId) },
   });
 
@@ -113,7 +113,7 @@ export const ProjectDetailsPage = () => {
             <ul className="space-y-3">
               {tasks.map((task) => (
                 <li key={task.id}>
-                  <TaskItem task={task} />
+                  <TaskItem task={task} refetch={refetch} />
                 </li>
               ))}
             </ul>
