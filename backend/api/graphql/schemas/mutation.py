@@ -1,8 +1,6 @@
 import strawberry
 from api.graphql.resolvers.project import create_project, update_project, delete_project
 from api.graphql.resolvers.user import (
-    create_user,
-    update_user,
     delete_user,
     signup,
     login,
@@ -15,8 +13,6 @@ class Mutation:
     signup = signup
     login = login
 
-    createUser = create_user
-    updateUser = update_user
     deleteUser = delete_user
 
     createProject = create_project

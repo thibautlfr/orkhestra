@@ -2,9 +2,6 @@ import jwt
 import bcrypt
 from datetime import datetime, timedelta, timezone
 from api.utils.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from typing import Callable, Any
-from strawberry.types import Info
-from fastapi import HTTPException
 
 
 def hash_password(password: str) -> str:
@@ -36,13 +33,3 @@ def decode_access_token(token: str) -> dict:
         return None
     except jwt.InvalidTokenError:
         return None
-
-
-# def login_required(resolver: Callable[..., Any]) -> Callable[..., Any]:
-#     def wrapper(*args: Any, info: Info, **kwargs: Any) -> Any:
-#         user = info.context.user
-#         if not user:
-#             raise HTTPException(status_code=401, detail="Authentication required")
-#         return resolver(*args, info=info, **kwargs)
-
-#     return wrapper

@@ -1,8 +1,10 @@
+from fastapi import HTTPException
 import strawberry
 from typing import List, Optional
+from api.graphql.directives.auth import hasRole
 from api.graphql.types.user import UserType
 from api.graphql.types.project import ProjectType
-from database.models import UserModel, ProjectModel
+from database.models import UserModel
 from database.db import get_db
 from api.utils.auth import hash_password, verify_password, create_access_token
 
@@ -21,9 +23,10 @@ def get_users() -> List[UserType]:
             projects=[
                 ProjectType(
                     id=project.id,
-                    title=project.name,
+                    title=project.title,
                     description=project.description,
                     owner_id=project.owner_id,
+                    tasks=[],
                 )
                 for project in user.projects
             ],
@@ -55,55 +58,16 @@ def get_user(id: int) -> UserType:
 
 
 @strawberry.mutation
-def create_user(username: str, password: str, role: str, email: str) -> UserType:
-    db = next(get_db())
-    user = UserModel(username=username, password=password, role=role, email=email)
-    db.add(user)
-    db.commit()
-    return UserType(
-        id=user.id,
-        username=user.username,
-        password=user.password,
-        role=user.role,
-        email=user.email,
-        projects=[],
-    )
+def delete_user(info: strawberry.Info) -> bool:
+    if not info.context.user:
+        raise HTTPException(status_code=401, detail="Authentication required")
 
+    if not hasRole(info, "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
-@strawberry.mutation
-def update_user(
-    id: int, username: str, password: str, role: str, email: str
-) -> UserType:
-    db = next(get_db())
-    user = db.query(UserModel).filter(UserModel.id == id).first()
-    user.username = username
-    user.password = password
-    user.role = role
-    user.email = email
-    db.commit()
-    return UserType(
-        id=user.id,
-        username=user.username,
-        password=user.password,
-        role=user.role,
-        email=user.email,
-        projects=[
-            ProjectType(
-                id=project.id,
-                title=project.name,
-                description=project.description,
-                owner_id=project.owner_id,
-            )
-            for project in user.projects
-        ],
-    )
+    db = info.context.db
 
-
-@strawberry.mutation
-def delete_user(id: int) -> bool:
-    db = next(get_db())
-    user = db.query(UserModel).filter(UserModel.id == id).first()
-    db.delete(user)
+    db.query(UserModel).filter(UserModel.id == info.context.user["user_id"]).delete()
     db.commit()
     return True
 

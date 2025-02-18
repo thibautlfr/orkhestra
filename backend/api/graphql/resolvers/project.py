@@ -5,8 +5,6 @@ from api.graphql.types.task import TaskType
 from database.models import ProjectModel
 from fastapi import HTTPException
 from api.graphql.directives.auth import hasRole
-from graphql import DirectiveLocation
-
 
 from typing import List
 

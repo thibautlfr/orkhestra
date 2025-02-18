@@ -29,19 +29,17 @@ async def get_current_user(request: Request = None, websocket: WebSocket = None)
     if not token:
         return None
 
-    decoded_token = decode_access_token(token)
-    if decoded_token is None:
+    userInfos = decode_access_token(token)
+    if userInfos is None:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    return decoded_token
+    return userInfos
 
 
 task_event = asyncio.Event()
 
 
-async def custom_context_dependency(
-    request: Request = None, websocket: WebSocket = None, user=Depends(get_current_user)
-):
+async def custom_context_dependency(user=Depends(get_current_user)):
     db = next(get_db())
     task_loader = TaskLoader(db)
     return CustomGraphQLContext(
