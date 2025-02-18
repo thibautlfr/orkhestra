@@ -9,6 +9,6 @@ def hasRole(info: Info, role: str) -> bool:
         raise HTTPException(status_code=401, detail="Authentication required")
 
     if info.context.user["role"] != role:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     return True

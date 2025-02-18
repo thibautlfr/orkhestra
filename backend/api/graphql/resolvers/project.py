@@ -60,9 +60,14 @@ def get_project(id: int) -> ProjectType:
 
 
 @strawberry.mutation
-def create_project(title: str, description: str, owner_id: int) -> ProjectType:
-    db = next(get_db())
-    project = ProjectModel(title=title, description=description, owner_id=owner_id)
+def create_project(info: strawberry.Info, title: str, description: str) -> ProjectType:
+    hasRole(info, "ADMIN")
+
+    db = info.context.db
+
+    user_id = info.context.user["user_id"]
+
+    project = ProjectModel(title=title, description=description, owner_id=user_id)
     db.add(project)
     db.commit()
     return ProjectType(

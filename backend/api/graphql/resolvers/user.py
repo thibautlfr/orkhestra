@@ -9,61 +9,9 @@ from database.db import get_db
 from api.utils.auth import hash_password, verify_password, create_access_token
 
 
-@strawberry.field
-def get_users() -> List[UserType]:
-    db = next(get_db())
-    users = db.query(UserModel).all()
-    return [
-        UserType(
-            id=user.id,
-            username=user.username,
-            password=user.password,
-            role=user.role,
-            email=user.email,
-            projects=[
-                ProjectType(
-                    id=project.id,
-                    title=project.title,
-                    description=project.description,
-                    owner_id=project.owner_id,
-                    tasks=[],
-                )
-                for project in user.projects
-            ],
-        )
-        for user in users
-    ]
-
-
-@strawberry.field
-def get_user(id: int) -> UserType:
-    db = next(get_db())
-    user = db.query(UserModel).filter(UserModel.id == id).first()
-    return UserType(
-        id=user.id,
-        username=user.username,
-        password=user.password,
-        role=user.role,
-        email=user.email,
-        projects=[
-            ProjectType(
-                id=project.id,
-                title=project.name,
-                description=project.description,
-                owner_id=project.owner_id,
-            )
-            for project in user.projects
-        ],
-    )
-
-
 @strawberry.mutation
 def delete_user(info: strawberry.Info) -> bool:
-    if not info.context.user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-
-    if not hasRole(info, "ADMIN"):
-        raise HTTPException(status_code=403, detail="Permission denied")
+    hasRole(info, "ADMIN")
 
     db = info.context.db
 

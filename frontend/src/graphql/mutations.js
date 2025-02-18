@@ -5,3 +5,13 @@ export const LOGIN = gql`
     login(email: $email, password: $password)
   }
 `;
+
+export const CREATE_PROJECT = gql`
+  mutation createProject($title: String!, $description: String!) {
+    createProject(title: $title, description: $description) {
+      id
+      title
+      description
+    }
+  }
+`;
