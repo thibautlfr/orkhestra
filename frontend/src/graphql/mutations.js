@@ -6,6 +6,16 @@ export const LOGIN = gql`
   }
 `;
 
+export const SIGNUP = gql`
+  mutation Signup($email: String!, $password: String!) {
+    signup(email: $email, password: $password) {
+      id
+      email
+      role
+    }
+  }
+`;
+
 export const CREATE_PROJECT = gql`
   mutation createProject($title: String!, $description: String!) {
     createProject(title: $title, description: $description) {
@@ -16,12 +26,13 @@ export const CREATE_PROJECT = gql`
   }
 `;
 
-export const SIGNUP = gql`
-  mutation Signup($email: String!, $password: String!) {
-    signup(email: $email, password: $password) {
+export const CREATE_TASK = gql`
+  mutation CreateTask($title: String!, $status: String!, $projectId: Int!) {
+    createTask(title: $title, status: $status, projectId: $projectId) {
       id
-      email
-      role
+      title
+      status
+      projectId
     }
   }
 `;
