@@ -8,9 +8,8 @@ class UserModel(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String(30), nullable=False)
+    email = Column(String(50), nullable=False)
     password = Column(String(30), nullable=False)
-    email = Column(String(30), nullable=False)
     role = Column(String(30), nullable=False)
     projects = relationship("ProjectModel", back_populates="owner")
 

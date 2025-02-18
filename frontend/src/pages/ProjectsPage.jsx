@@ -7,6 +7,8 @@ import { CREATE_PROJECT } from "../graphql/mutations";
 import { GET_PROJECTS } from "../graphql/queries";
 
 export const ProjectsPage = () => {
+  document.title = "Mes Projets";
+
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [newProject, setNewProject] = useState({ title: "", description: "" });

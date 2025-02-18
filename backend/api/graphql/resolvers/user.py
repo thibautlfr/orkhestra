@@ -21,27 +21,24 @@ def delete_user(info: strawberry.Info) -> bool:
 
 
 @strawberry.mutation
-def signup(username: str, password: str, email: str, role: str) -> UserType:
+def signup(email: str, password: str) -> UserType:
     db = next(get_db())
 
-    existing_user = db.query(UserModel).filter(UserModel.username == username).first()
+    existing_user = db.query(UserModel).filter(UserModel.email == email).first()
     if existing_user:
         raise Exception("User already exists")
 
     hashed_password = hash_password(password)
 
-    user = UserModel(
-        username=username, password=hashed_password, email=email, role=role, projects=[]
-    )
+    user = UserModel(email=email, password=hashed_password, role="ADMIN", projects=[])
     db.add(user)
     db.commit()
     db.refresh(user)
 
     return UserType(
         id=user.id,
-        username=user.username,
-        password=user.password,
         email=user.email,
+        password=user.password,
         role=user.role,
         projects=[],
     )
@@ -53,13 +50,12 @@ def login(email: str, password: str) -> Optional[str]:
 
     user = db.query(UserModel).filter(UserModel.email == email).first()
     if not user or not verify_password(password, user.password):
-        raise Exception("Invalid username or password")
+        raise Exception("Invalid email or password")
 
     token = create_access_token(
         {
             "user_id": user.id,
             "email": user.email,
-            "username": user.username,
             "role": user.role,
         }
     )

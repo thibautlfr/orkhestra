@@ -8,7 +8,6 @@ import { ON_TASK_CREATED } from "../graphql/subscriptions";
 
 export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
-
   const { data, loading, error } = useQuery(GET_PROJECT, {
     variables: { id: parseInt(projectId) },
   });
@@ -18,6 +17,7 @@ export const ProjectDetailsPage = () => {
   useEffect(() => {
     if (data?.getProject) {
       setTasks(data.getProject.tasks);
+      document.title = data.getProject.title;
     }
   }, [data]);
 
@@ -54,20 +54,27 @@ export const ProjectDetailsPage = () => {
       <div className="space-y-8">
         <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {project.name}
+            {project.title}
           </h2>
           <p className="text-gray-600">{project.description}</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Tâches</h3>
-          <ul className="space-y-3">
-            {tasks.map((task) => (
-              <li key={task.id}>
-                <TaskItem task={task} />
-              </li>
-            ))}
-          </ul>
+
+          {tasks.length === 0 ? (
+            <p className="text-gray-500 text-center">
+              📌 Aucune tâche pour le moment. Créez votre première tâche !
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {tasks.map((task) => (
+                <li key={task.id}>
+                  <TaskItem task={task} />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

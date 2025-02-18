@@ -1,13 +1,13 @@
-// src/components/Layout.jsx
-import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Briefcase, Menu } from 'lucide-react';
+import { Briefcase, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Layout = ({ children }) => {
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+    localStorage.removeItem("token");
+    navigate("/login");
   };
 
   return (
@@ -23,18 +23,21 @@ export const Layout = ({ children }) => {
                 </span>
               </Link>
               <nav className="hidden md:flex items-center space-x-6">
-                <Link to="/" className="text-gray-600 hover:text-gray-900 flex items-center space-x-1">
+                <Link to="/" className="text-gray-600 hover:text-gray-900">
                   Projets
                 </Link>
               </nav>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Déconnexion</span>
-            </button>
+
+            {token && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Déconnexion</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -44,4 +47,4 @@ export const Layout = ({ children }) => {
       </main>
     </div>
   );
-}
+};

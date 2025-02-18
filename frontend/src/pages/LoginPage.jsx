@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { LOGIN } from "../graphql/mutations";
 
 export const LoginPage = () => {
+  document.title = "Connexion à ProjectHub";
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [login, { loading, error }] = useMutation(LOGIN);
